@@ -155,16 +155,16 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
       _crashReportActivated = [[NSUserDefaults standardUserDefaults] boolForKey:kQuincyKitActivated];
     } else {
       _crashReportActivated = YES;
-      [[NSUserDefaults standardUserDefaults] setValue:[NSNumber numberWithBool:YES] forKey:kQuincyKitActivated];
+      [[NSUserDefaults standardUserDefaults] setValue:@YES forKey:kQuincyKitActivated];
     }
     
     if (_crashReportActivated) {
       _crashFiles = [[NSMutableArray alloc] init];
       NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-      _crashesDir = [[NSString stringWithFormat:@"%@", [[paths objectAtIndex:0] stringByAppendingPathComponent:@"/crashes/"]] retain];
+      _crashesDir = [[NSString stringWithFormat:@"%@", [paths[0] stringByAppendingPathComponent:@"/crashes/"]] retain];
 			
       if (![self.fileManager fileExistsAtPath:_crashesDir]) {
-        NSDictionary *attributes = [NSDictionary dictionaryWithObject: [NSNumber numberWithUnsignedLong: 0755] forKey: NSFilePosixPermissions];
+        NSDictionary *attributes = @{NSFilePosixPermissions: @0755UL};
         NSError *theError = NULL;
 				
         [self.fileManager createDirectoryAtPath:_crashesDir withIntermediateDirectories: YES attributes: attributes error: &theError];
@@ -300,9 +300,9 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
   if (!approvedCrashReports || [approvedCrashReports count] == 0) return YES;
   
   for (NSUInteger i=0; i < [_crashFiles count]; i++) {
-    NSString *filename = [_crashFiles objectAtIndex:i];
+    NSString *filename = _crashFiles[i];
     
-    if (![approvedCrashReports objectForKey:filename]) return YES;
+    if (!approvedCrashReports[filename]) return YES;
   }
   
   return NO;
@@ -318,7 +318,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
 			
       while ((file = [dirEnum nextObject])) {
         NSDictionary *fileAttributes = [self.fileManager attributesOfItemAtPath:[_crashesDir stringByAppendingPathComponent:file] error:&error];
-        if ([[fileAttributes objectForKey:NSFileSize] intValue] > 0) {
+        if ([fileAttributes[NSFileSize] intValue] > 0) {
           [_crashFiles addObject:file];
         }
       }
@@ -460,7 +460,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
   sysctlbyname("hw.machine", NULL, &size, NULL, 0);
   char *answer = (char*)malloc(size);
   sysctlbyname("hw.machine", answer, &size, NULL, 0);
-  NSString *platform = [NSString stringWithCString:answer encoding: NSUTF8StringEncoding];
+  NSString *platform = @(answer);
   free(answer);
   return platform;
 }
@@ -490,7 +490,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
   _crashIdenticalCurrentVersion = NO;
   
   for (NSUInteger i=0; i < [_crashFiles count]; i++) {
-    NSString *filename = [_crashesDir stringByAppendingPathComponent:[_crashFiles objectAtIndex:i]];
+    NSString *filename = [_crashesDir stringByAppendingPathComponent:_crashFiles[i]];
     NSData *crashData = [NSData dataWithContentsOfFile:filename];
 		
     if ([crashData length] > 0) {
@@ -524,7 +524,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
       
       
       // store this crash report as user approved, so if it fails it will retry automatically
-      [approvedCrashReports setObject:[NSNumber numberWithBool:YES] forKey:[_crashFiles objectAtIndex:i]];
+      approvedCrashReports[_crashFiles[i]] = @YES;
     } else {
       // we cannot do anything with this report, so delete it
       [self.fileManager removeItemAtPath:filename error:&error];
@@ -546,7 +546,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
   NSError *error = NULL;
   
   for (NSUInteger i=0; i < [_crashFiles count]; i++) {		
-    [self.fileManager removeItemAtPath:[_crashesDir stringByAppendingPathComponent:[_crashFiles objectAtIndex:i]] error:&error];
+    [self.fileManager removeItemAtPath:[_crashesDir stringByAppendingPathComponent:_crashFiles[i]] error:&error];
   }
   [_crashFiles removeAllObjects];
   
@@ -689,10 +689,10 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
                                                                        errorDescription:NULL];
       BWQuincyLog(@"Received API response: %@", response);
       
-      _serverResult = (CrashReportStatus)[[response objectForKey:@"status"] intValue];
-      if ([response objectForKey:@"id"]) {
-        _feedbackRequestID = [[NSString alloc] initWithString:[response objectForKey:@"id"]];
-        _feedbackDelayInterval = [[response objectForKey:@"delay"] floatValue];
+      _serverResult = (CrashReportStatus)[response[@"status"] intValue];
+      if (response[@"id"]) {
+        _feedbackRequestID = [[NSString alloc] initWithString:response[@"id"]];
+        _feedbackDelayInterval = [response[@"delay"] floatValue];
         if (_feedbackDelayInterval > 0)
           _feedbackDelayInterval *= 0.01;
       }
@@ -760,7 +760,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
   if (_analyzerStarted == 0) {
     // mark the start of the routine
     _analyzerStarted = 1;
-    [[NSUserDefaults standardUserDefaults] setValue:[NSNumber numberWithInt:_analyzerStarted] forKey:kQuincyKitAnalyzerStarted];
+    [[NSUserDefaults standardUserDefaults] setValue:@(_analyzerStarted) forKey:kQuincyKitAnalyzerStarted];
     [[NSUserDefaults standardUserDefaults] synchronize];
     
     // Try loading the crash report
@@ -778,7 +778,7 @@ NSString *BWQuincyLocalize(NSString *stringToken) {
   // Purge the report
   // mark the end of the routine
   _analyzerStarted = 0;
-  [[NSUserDefaults standardUserDefaults] setValue:[NSNumber numberWithInt:_analyzerStarted] forKey:kQuincyKitAnalyzerStarted];
+  [[NSUserDefaults standardUserDefaults] setValue:@(_analyzerStarted) forKey:kQuincyKitAnalyzerStarted];
   [[NSUserDefaults standardUserDefaults] synchronize];
   
   [crashReporter purgePendingCrashReport];

@@ -205,7 +205,7 @@ static NSInteger binaryImageSort(id binary1, id binary2, void *context) {
                 processName = report.processInfo.processName;
             
             /* PID */
-            processId = [[NSNumber numberWithUnsignedInteger: report.processInfo.processID] stringValue];
+            processId = [@(report.processInfo.processID) stringValue];
             
             /* Process Path */
             if (report.processInfo.processPath != nil) {
@@ -222,7 +222,7 @@ static NSInteger binaryImageSort(id binary1, id binary2, void *context) {
                 parentProcessName = report.processInfo.parentProcessName;
             
             /* Parent Process ID */
-            parentProcessId = [[NSNumber numberWithUnsignedInteger: report.processInfo.parentProcessID] stringValue];
+            parentProcessId = [@(report.processInfo.parentProcessID) stringValue];
         }
         
         [text appendFormat: @"Process:         %@ [%@]\n", processName, processId];
@@ -278,7 +278,7 @@ static NSInteger binaryImageSort(id binary1, id binary2, void *context) {
         NSUInteger numberBlankStackFrames = 0;
         
         for (NSUInteger frame_idx = 0; frame_idx < [exception.stackFrames count]; frame_idx++) {
-            PLCrashReportStackFrameInfo *frameInfo = [exception.stackFrames objectAtIndex: frame_idx];
+            PLCrashReportStackFrameInfo *frameInfo = (exception.stackFrames)[frame_idx];
             NSString *formattedStackFrame = [self formatStackFrame: frameInfo frameIndex: frame_idx - numberBlankStackFrames report: report];
             if (formattedStackFrame) {
                 if (frame_idx - numberBlankStackFrames == 0) {
@@ -303,7 +303,7 @@ static NSInteger binaryImageSort(id binary1, id binary2, void *context) {
         NSUInteger numberBlankStackFrames = 0;
         
         for (NSUInteger frame_idx = 0; frame_idx < [thread.stackFrames count]; frame_idx++) {
-            PLCrashReportStackFrameInfo *frameInfo = [thread.stackFrames objectAtIndex: frame_idx];
+            PLCrashReportStackFrameInfo *frameInfo = (thread.stackFrames)[frame_idx];
             NSString *formattedStackFrame = [self formatStackFrame: frameInfo frameIndex: frame_idx report: report];
             if (formattedStackFrame) {
                 if (frame_idx - numberBlankStackFrames == 0) {
